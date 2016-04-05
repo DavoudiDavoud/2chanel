@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
 	int value2 = readData(fd)-0x8000;
 	
 	
-	fprintf(stderr,"data1 = %d  data2 = %d      \r",value,vlue2);
+	fprintf(stderr,"data1 = %d  data2 = %d      \r",value,value2);
 	// if stdout is redirected to a file or pipe, output the data
 		if( no_tty )
 		{
