@@ -167,37 +167,56 @@ int main(int argc, char *argv[])
 	// get a file descriptor for the GPIO pin
 	sysfs_fd = gpio_fd_open(drdy_GPIO);
 
+	
+	// we read data in an endless loop and display it
+	// this needs to run in a thread ideally
+	while (1) {
+	//ch1	
 	// resets the AD7705 so that it expects a write to the communication register
-        printf("sending reset\n");
-	writeReset(fd);
-
+        writeReset(fd);
 	// tell the AD7705 that the next write will be to the clock register
-	writeReg(fd,0x20);
+	 writeReg(fd,0x20);
 	// write 00001100 : CLOCKDIV=1,CLK=1,expects 4.9152MHz input clock
 	writeReg(fd,0x0C);
-
 	// tell the AD7705 that the next write will be the setup register
 	writeReg(fd,0x10);
 	// intiates a self calibration and then after that starts converting
 	writeReg(fd,0x40);
-
-	// we read data in an endless loop and display it
-	// this needs to run in a thread ideally
-	while (1) {
-
-	  // let's wait for data for max one second
-	  ret = gpio_poll(sysfs_fd,1000);
+	// let's wait for data for max one second
+	ret = gpio_poll(sysfs_fd,1000);
+	  if (ret<1) {
+	    fprintf(stderr,"Poll error %d\n",ret);
+	  }
+	// tell the AD7705 to read the data register (16 bits)
+	writeReg(fd,0x38);
+	// read the data register by performing two 8 bit reads
+	int value = readData(fd)-0x8000;
+	  
+	//ch2  
+	// resets the AD7705 so that it expects a write to the communication register
+        writeReset(fd);
+	// tell the AD7705 that the next write will be to the clock register
+	writeReg(fd,0x21);
+	// write 00001100 : CLOCKDIV=1,CLK=1,expects 4.9152MHz input clock
+	writeReg(fd,0x0C);
+	// tell the AD7705 that the next write will be the setup register
+	writeReg(fd,0x11);
+	// intiates a self calibration and then after that starts converting
+	writeReg(fd,0x40);
+	// let's wait for data for max one second
+	ret = gpio_poll(sysfs_fd,1000);
 	  if (ret<1) {
 	    fprintf(stderr,"Poll error %d\n",ret);
 	  }
 
-	  // tell the AD7705 to read the data register (16 bits)
-	  writeReg(fd,0x38);
-	  // read the data register by performing two 8 bit reads
-	  int value = readData(fd)-0x8000;
-		fprintf(stderr,"data = %d       \r",value);
-
-		// if stdout is redirected to a file or pipe, output the data
+	 // tell the AD7705 to read the data register (16 bits)
+	writeReg(fd,0x39);
+	// read the data register by performing two 8 bit reads
+	int value2 = readData(fd)-0x8000;
+	
+	
+	fprintf(stderr,"data1 = %d  data2 = %d      \r",value,vlue2);
+	// if stdout is redirected to a file or pipe, output the data
 		if( no_tty )
 		{
 			printf("%d\n", value);
